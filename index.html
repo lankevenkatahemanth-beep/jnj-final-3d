@@ -49,40 +49,40 @@
         spotLight.position.set(5, 10, 7.5);
         scene.add(spotLight);
 
-        // --- MODEL LOADING ---
-        let myLogo; 
-        const loader = new GLTFLoader();
+      // --- MODEL LOADING ---
+let myLogo; 
+const loader = new GLTFLoader();
+
+// Use the RAW link we just found
+const modelURL = 'https://raw.githubusercontent.com/lankevenkatahemanth-beep/jnj-final-3d/main/Jnj3dmodel-v1.glb';
+
+loader.load(modelURL, 
+    (gltf) => {
+        myLogo = gltf.scene;
         
-        // Ensure this link matches your NEW repo name exactly!
-        const modelURL = 'https://raw.githubusercontent.com/lankevenkatahemanth-beep/jnj-final-3d/main/Jnj3dmodel-v1.glb';
+        // Auto-center the model
+        const box = new THREE.Box3().setFromObject(myLogo);
+        const center = box.getCenter(new THREE.Vector3());
+        myLogo.position.sub(center); 
+        
+        // Auto-scale
+        const size = box.getSize(new THREE.Vector3());
+        const scale = 5 / Math.max(size.x, size.y, size.z);
+        myLogo.scale.set(scale, scale, scale);
 
-        loader.load(modelURL, 
-            (gltf) => {
-                myLogo = gltf.scene;
-                
-                // Auto-center the model
-                const box = new THREE.Box3().setFromObject(myLogo);
-                const center = box.getCenter(new THREE.Vector3());
-                myLogo.position.sub(center); 
-                
-                // Auto-scale to fit screen
-                const size = box.getSize(new THREE.Vector3());
-                const scale = 5 / Math.max(size.x, size.y, size.z);
-                myLogo.scale.set(scale, scale, scale);
-
-                scene.add(myLogo);
-                document.getElementById('loader-ui').style.display = 'none';
-            }, 
-            (xhr) => {
-                const percent = Math.round((xhr.loaded / xhr.total) * 100);
-                document.getElementById('progress').innerText = percent + '%';
-            },
-            (error) => {
-                document.getElementById('status').innerText = "Error Loading Model";
-                console.error(error);
-            }
-        );
-
+        scene.add(myLogo);
+        document.getElementById('loader-ui').style.display = 'none';
+        console.log("Model loaded successfully from the new repo!");
+    }, 
+    (xhr) => {
+        const percent = Math.round((xhr.loaded / (xhr.total || 1000000)) * 100);
+        document.getElementById('progress').innerText = percent + '%';
+    },
+    (error) => {
+        document.getElementById('status').innerText = "Error: Check Console (F12)";
+        console.error("The link failed. Ensure the repo is PUBLIC.", error);
+    }
+);
         // --- ANIMATION ---
         function animate() {
             requestAnimationFrame(animate);
