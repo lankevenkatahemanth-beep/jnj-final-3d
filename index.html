@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J&J 3D Experience</title>
+    <style>
+        body { margin: 0; background-color: #ffffff; overflow: hidden; font-family: sans-serif; }
+        canvas { display: block; }
+        #loader-ui {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center; color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="loader-ui">
+        <h2 id="status">Loading J&J Logo...</h2>
+        <p id="progress">0%</p>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 10); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // --- LIGHTING ---
+        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+        const spotLight = new THREE.DirectionalLight(0xffffff, 2);
+        spotLight.position.set(5, 10, 7.5);
+        scene.add(spotLight);
+
+        // --- MODEL LOADING ---
+        let myLogo; 
+        const loader = new GLTFLoader();
+        
+        // Ensure this link matches your NEW repo name exactly!
+        const modelURL = 'https://raw.githubusercontent.com/lankevenkatahemanth-beep/jnj-final-3d/main/Jnj3dmodel-v1.glb';
+
+        loader.load(modelURL, 
+            (gltf) => {
+                myLogo = gltf.scene;
+                
+                // Auto-center the model
+                const box = new THREE.Box3().setFromObject(myLogo);
+                const center = box.getCenter(new THREE.Vector3());
+                myLogo.position.sub(center); 
+                
+                // Auto-scale to fit screen
+                const size = box.getSize(new THREE.Vector3());
+                const scale = 5 / Math.max(size.x, size.y, size.z);
+                myLogo.scale.set(scale, scale, scale);
+
+                scene.add(myLogo);
+                document.getElementById('loader-ui').style.display = 'none';
+            }, 
+            (xhr) => {
+                const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                document.getElementById('progress').innerText = percent + '%';
+            },
+            (error) => {
+                document.getElementById('status').innerText = "Error Loading Model";
+                console.error(error);
+            }
+        );
+
+        // --- ANIMATION ---
+        function animate() {
+            requestAnimationFrame(animate);
+            if (myLogo) {
+                myLogo.rotation.y += 0.01; // The spinning effect
+                myLogo.rotation.x = Math.sin(Date.now() * 0.001) * 0.1; // Gentle tilting
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- WINDOW RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
